@@ -1,7 +1,7 @@
 package main
 
 import (
-  "fmt"
+  //"fmt"
   "log"
   "os"
 
@@ -34,17 +34,16 @@ func getRecord(c *gin.Context) {
     log.Fatal("Failed to connect database")
   }
 
-
   record := Record{}
   db.First(&record, "uuid = ?", c.Param("uuid"))
   
-  fmt.Print(record)
   if (Record{} != record) {
-    c.IndentedJSON(http.StatusOK, record)
+    c.JSON(http.StatusOK, record)
   } else {
-    c.IndentedJSON(http.StatusNotFound, Record{})
+    c.JSON(http.StatusNotFound, "")
   }
 }
+
 
 func main() {
   router := gin.Default()
@@ -56,7 +55,6 @@ func main() {
   config.AllowOrigins = []string{"http://localhost:4200"}
   router.Use(cors.New(config))
   
-
   router.GET("/record/get/:uuid", getRecord)
 
   router.Run("localhost:5200")
