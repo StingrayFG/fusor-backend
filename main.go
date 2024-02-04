@@ -5,7 +5,7 @@ import (
   "log"
   "os"
 
-  //"github.com/teris-io/shortid"
+  "github.com/teris-io/shortid"
   "github.com/joho/godotenv"
 
   "net/http"
@@ -22,6 +22,33 @@ type Record struct {
   OriginalLink  string  `json:"originalLink"`
 }
 
+
+func createRecord(c *gin.Context) {
+  err := godotenv.Load()
+  if err != nil {
+    log.Fatal("Error loading .env file")
+  }
+
+  db, err := gorm.Open(mysql.Open(os.Getenv("DATABASE_URL")), &gorm.Config{})
+  if err != nil {
+    log.Fatal("Failed to connect database")
+  }
+
+  newRecord := Record{}
+  if err := c.BindJSON(&newRecord); err != nil {
+    return
+  }
+
+  sid, _ := shortid.Generate()
+  newRecord.Uuid = sid
+
+  result := db.Create(newRecord)
+  if result.Error != nil {
+    c.JSON(http.StatusNotFound, "")
+  } else {
+    c.JSON(http.StatusCreated, sid)
+  }
+}
 
 func getRecord(c *gin.Context) {
   err := godotenv.Load()
@@ -55,6 +82,7 @@ func main() {
   config.AllowOrigins = []string{"http://localhost:4200"}
   router.Use(cors.New(config))
   
+  router.POST("/record/create", createRecord)
   router.GET("/record/get/:uuid", getRecord)
 
   router.Run("localhost:5200")
